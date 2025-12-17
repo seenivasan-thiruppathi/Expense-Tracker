@@ -12,7 +12,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
           <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
+            className="text-gray-400 hover:text-gray-600 text-2xl cursor-pointer"
           >
             <X />
           </button>

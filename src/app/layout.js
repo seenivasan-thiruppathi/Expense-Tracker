@@ -5,9 +5,9 @@ import Header2 from "./components/Header2.jsx";
 import Header3 from "./components/Header3.jsx";
 import Header4 from "./components/Header4.jsx";
 import Footer from "./components/Footer.js";
-import { UserProvider, UserContext } from "./Context/UserContext.js";
 import { Toaster } from "react-hot-toast";
 import MuiThemeProvider from "./ThemeProvider";
+import Providers from "./Providers";
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
 //   subsets: ["latin"],
@@ -38,27 +38,27 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={beVietnamPro.variable}>
       <body className={`${beVietnamPro.className} antialiased bg-[#f5f5f5]`}>
-      {/* <body className={`${beVietnamPro.className} antialiased bg-gradient-to-br from-[#f5f9ff] via-[#e2eaff] to-[#e7eeff]  `}> */}
-      {/* <body className={`${beVietnamPro.className} antialiased bg-gradient-to-br 
+        {/* <body className={`${beVietnamPro.className} antialiased bg-gradient-to-br from-[#f5f9ff] via-[#e2eaff] to-[#e7eeff]  `}> */}
+        {/* <body className={`${beVietnamPro.className} antialiased bg-gradient-to-br 
             from-[#2b2d42] via-[#3a3f5c] to-[#4b557a]  !text-[#f5f5f5] `}> */}
         <div className="relative flex size-full min-h-screen flex-col group/design-root overflow-x-hidden">
           <div className="layout-container flex h-full grow flex-col">
             {/* <MuiThemeProvider> */}
-            <UserProvider>
-              <Header3 />
-              <div className=" sm:w-[90%] md:w-[80%] lg:w-[1000px] xl:w-[1200px] w-full px-3 mx-auto h-full grow">
-                {children}
-              </div>
-              {/* <Footer /> */}
-              <Toaster
-                toastOptions={{
-                  className: "",
-                  style: {
-                    fontSize: "13px",
-                  },
-                }}
-              />
-            </UserProvider>
+            <Providers>
+                <Header3 />
+                <div className=" sm:w-[90%] md:w-[80%] lg:w-[1000px] xl:w-[1200px] w-full px-3 mx-auto h-full grow">
+                  {children}
+                </div>
+                {/* <Footer /> */}
+                <Toaster
+                  toastOptions={{
+                    className: "",
+                    style: {
+                      fontSize: "13px",
+                    },
+                  }}
+                />
+              </Providers>
             {/* </MuiThemeProvider> */}
           </div>
         </div>

@@ -1,8 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { Suspense, useEffect, useState } from "react";
-import axiosInstance from "../../../axiosInstance";
-import axios from "axios";
+import { useSelector, useDispatch } from "react-redux";
 import {
   Table,
   TableBody,
@@ -34,102 +33,46 @@ import dayjs from "dayjs";
 import TransactionForm from "../../../components/TransactionForm";
 import TransactionModal from "../../../components/TransactionModal";
 import { capitalize } from "../../../../utils/helper";
+import { fetchTransactions, fetchCategories, setType, setCategory, setStartDate, setEndDate, setSearchTerm, resetFilters } from "../../../store/slices/transactionSlice";
 
 
 const Page = () => {
-  const [txns, setTxns] = useState([]);
-  // Filter values
-  const [type, setType] = useState("");
-  const [category, setCategory] = useState("");
-  const [catOptions, setCatOptions] = useState([]);
-  const [resLen, setResLen] = useState(0);
-  const [txnsLen, setTxnsLen] = useState(0);
-  const [searchTerm, setsearchTerm] = useState('')
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { transactions, loading, filters, categories, searchTerm } = useSelector(state => state.transactions);
 
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTxnID, setEditTxnID] = useState("");
   const [modalType, setModalType] = useState("");
 
-  // Date range
   const now = new Date();
-  const [startDate, setStartDate] = useState(
-    new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
-  );
-  const [endDate, setEndDate] = useState(
-    new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0))
-  );
+  const startDate = new Date(filters.startDate);
+  const endDate = new Date(filters.endDate);
 
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)")
 
   // Fetching Categories based on Transaction type
-  const fetchCategories = async (type) => {
-    try {
-      const response = type.length > 0 && await axiosInstance.get(`/api/categories/type/${type}`);
-      console.log("/api/categories/type/[type] category fetched response", response.data);
-      setResLen(response.data.length);
-      if (response.data.length > 0) {
-        setCatOptions(response.data);
-      }
-    } catch (error) {
-      console.log("error", error);
-    }
-  };
   useEffect(() => {
-    fetchCategories(type);
-  }, [type]);
+    if (filters.type) {
+      dispatch(fetchCategories(filters.type));
+    }
+  }, [filters.type, dispatch]);
 
   // Fetching Transactions
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true);
-      const params = {};
-      if (type) params.type = type;
-      if (category) params.category = category;
-      params.startDate = startDate.toISOString();
-      params.endDate = endDate.toISOString();
-      const response = await axiosInstance.get("/api/transactions", { params });
-      // console.log("transactions/list/page.js response", response);
-      // if (response.data.redirectUrl) {
-      //   // console.log("RedirectURL present", response.data.redirectUrl);
-      //   toast.error("Session Expired, Login Again!");
-      //   router.push(response.data.redirectUrl);
-      //   return;
-      // }
-      console.log("/transactions/list/page.js Txn :", response.data.txns);
-      if (response.data.txns?.length > 0) {
-        setTxns(response.data.txns);
-      }
-      setTxnsLen(response.data?.txns?.length);
-      // console.log(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error("error", error);
-      setLoading(false);
-    }
-  };
   useEffect(() => {
-    console.log("Transactions updated ");
+    const params = {};
+    if (filters.type) params.type = filters.type;
+    if (filters.category) params.category = filters.category;
+    params.startDate = filters.startDate;
+    params.endDate = filters.endDate;
+    dispatch(fetchTransactions(params));
+  }, [filters.type, filters.category, filters.startDate, filters.endDate, dispatch]);
 
-    fetchTransactions();
-  }, [type, category, startDate, endDate]);
-
-  const resetFilters = () => {
-    setType("");
-    setCategory("");
-    setStartDate(
-      new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
-    )
-    setEndDate(
-      new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0))
-    )
-  }
   function createData(_id, date, category, description, amount, txnType) {
     return { _id, date, category, description, amount, txnType };
   }
-  const filteredTransactions = txns.filter((txn) => txn?.description?.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredTransactions = transactions.filter((txn) => txn?.description?.toLowerCase().includes(searchTerm.toLowerCase()));
   const rows = filteredTransactions.map((txn) =>
     createData(
       txn._id,
@@ -146,6 +89,26 @@ const Page = () => {
     fontWeight: 600,
     fontSize: 16,
   };
+  // function createData(_id, date, category, description, amount, txnType) {
+  //   return { _id, date, category, description, amount, txnType };
+  // }
+  // const filteredTransactions = txns.filter((txn) => txn?.description?.toLowerCase().includes(searchTerm.toLowerCase()));
+  // const rows = filteredTransactions.map((txn) =>
+  //   createData(
+  //     txn._id,
+  //     txn.date,
+  //     txn.category,
+  //     txn.description,
+  //     txn.amount,
+  //     txn.txnType
+  //   )
+  // );
+  // console.log("rows", rows);
+  // const theadStyles = {
+  //   color: "#7008e7",
+  //   fontWeight: 600,
+  //   fontSize: 16,
+  // };
   return (
     <div className="w-full my-10">
       <div className="flex sm:flex-row flex-col gap-4 text-blue-500 sm:items-center sm:justify-between mb-8">
@@ -179,7 +142,7 @@ const Page = () => {
                 label="Start Date"
                 value={dayjs(startDate)}
                 onChange={(newValue) => {
-                  setStartDate(new Date(newValue));
+                  dispatch(setStartDate(newValue.toDate()));
                 }}
                 format="DD/MM/YYYY"
                 defaultValue={{}}
@@ -195,7 +158,7 @@ const Page = () => {
                 label="End Date"
                 value={dayjs(endDate)}
                 onChange={(newValue) => {
-                  setEndDate(new Date(newValue));
+                  dispatch(setEndDate(newValue.toDate()));
                 }}
                 format="DD/MM/YYYY"
                 defaultValue={{}}
@@ -215,7 +178,7 @@ const Page = () => {
               <Select
                 labelId="Txn-type-selector-label"
                 id="Txn-type"
-                value={type}
+                value={filters.type}
 
 
                 // sx={{
@@ -226,8 +189,7 @@ const Page = () => {
                 // }}
                 label="Transaction Type"
                 onChange={(e) => {
-                  setType(e.target.value);
-                  setCategory("");
+                  dispatch(setType(e.target.value));
                 }}
               >
                 <MenuItem key={"Expense"} value="Expense">
@@ -246,12 +208,12 @@ const Page = () => {
               <Select
                 labelId="category-selector-label"
                 id="category-selector"
-                value={category}
+                value={filters.category}
                 label="Select Category"
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => dispatch(setCategory(e.target.value))}
 
               >
-                {catOptions.map((catOption, index) => (
+                {categories.map((catOption, index) => (
                   <MenuItem key={catOption._id} value={catOption.name}>
                     {capitalize(catOption.name)}
                   </MenuItem>
@@ -262,7 +224,7 @@ const Page = () => {
 
           {/* Clear filter */}
           <button
-            onClick={() => resetFilters()}
+            onClick={() => dispatch(resetFilters())}
             className=" flex items-center gap-2 text-white bg-error-500 hover:bg-error-600 border cursor-pointer hover rounded-lg text-sm px-3 py-2"
           >
             <BrushCleaning className="text-white text-sm" />
@@ -274,7 +236,7 @@ const Page = () => {
         <div className="lg:w-auto w-full justify-items-center sm:justify-items-end">
           <div className="flex items-center w-full sm:w-auto gap-2 border bg-white border-gray-300 hover:focus:border-gray-400 focus:outline-none p-2 rounded-lg">
             <SearchIcon className="text-gray-500" />
-            <input type='text' value={searchTerm} onChange={(e) => setsearchTerm(e.target.value)} placeholder="Search" className="focus:outline-none w-full" />
+            <input type='text' value={searchTerm} onChange={(e) => dispatch(setSearchTerm(e.target.value))} placeholder="Search" className="focus:outline-none w-full" />
           </div>
         </div>
       </div>
@@ -286,8 +248,8 @@ const Page = () => {
             let newendDate = new Date(endDate);
             newstartDate.setMonth(newstartDate.getMonth() - 1);
             newendDate.setMonth(newendDate.getMonth() - 1);
-            setStartDate(newstartDate);
-            setEndDate(newendDate);
+            dispatch(setStartDate(newstartDate));
+            dispatch(setEndDate(newendDate));
           }}
         >
           <ChevronLeft />Previous {!isMobile ? "Month" : ""}
@@ -305,12 +267,12 @@ const Page = () => {
               <p
                 className="text-xs md:text-[14px] font-medium text-slate-800 cursor-pointer"
                 onClick={() => {
-                  setStartDate(
+                  dispatch(setStartDate(
                     new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
-                  );
-                  setEndDate(
+                  ));
+                  dispatch(setEndDate(
                     new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0))
-                  );
+                  ));
                 }}
               ><Tooltip title="Go to Current Month">
 
@@ -320,12 +282,12 @@ const Page = () => {
             )) :
             (<p className="text-xs md:text-[14px] font-medium text-slate-800 cursor-pointer"
               onClick={() => {
-                setStartDate(
+                dispatch(setStartDate(
                   new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
-                );
-                setEndDate(
+                ));
+                dispatch(setEndDate(
                   new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0))
-                );
+                ));
               }}
             ><Tooltip title="Go to Current Month">
                 {moment(startDate).format("MMM YYYY")} - {moment(endDate).format("MMM YYYY")}
@@ -335,18 +297,18 @@ const Page = () => {
         <p
           className="text-sm p-2 text-amber-500 cursor-pointer flex items-center"
           onClick={() => {
-            let newstartDate = new Date(startDate);
-            let newendDate = new Date(endDate);
-            newstartDate.setMonth(startDate.getMonth() + 1);
-            newendDate.setMonth(endDate.getMonth() + 1);
-            setStartDate(newstartDate);
-            setEndDate(newendDate);
+            let newstartDate = new Date(filters.startDate);
+            let newendDate = new Date(filters.endDate);
+            newstartDate.setMonth(filters.startDate.getMonth() + 1);
+            newendDate.setMonth(filters.endDate.getMonth() + 1);
+            dispatch(setStartDate(newstartDate));
+            dispatch(setEndDate(newendDate));
           }}
         >
           Next {!isMobile ? "Month" : ""}  <ChevronRight />
         </p>
       </div>
-      <TransactionTable rows={rows} loading={loading} txnsLen={txnsLen} theadStyles={theadStyles} />
+      <TransactionTable rows={rows} loading={loading} txnsLen={transactions.length} theadStyles={theadStyles} />
 
       {/* Add Transaction Modal */}
       {/* <Modal
@@ -358,7 +320,7 @@ const Page = () => {
           initialData={txns.find((item) => item._id === editTxnID)}
         />}
       </Modal> */}
-      <TransactionModal isModalOpen={isModalOpen} modalType={modalType} editTxnID={editTxnID} Txns={txns} setIsModalOpen={setIsModalOpen} />
+      <TransactionModal isModalOpen={isModalOpen} modalType={modalType} editTxnID={editTxnID} Txns={transactions} setIsModalOpen={setIsModalOpen} />
 
     </div>
   );
