@@ -5,7 +5,7 @@ export const fetchTransactions = createAsyncThunk(
     "transactions/fetchTransactions",
     async (params = {}) => {
         const response = await axiosInstance.get('/api/transactions', { params });
-        return response.data.txns || [];
+        return response.data || [];
     }
 );
 
@@ -18,17 +18,11 @@ export const fetchCategories = createAsyncThunk(
     }
 );
 
-export const fetchTxnById = createAsyncThunk(
-    "transactions/fetchTxnById",
-    async (id) => {
-        const response = await axiosInstance.get(`/api/transactions/${id}`);
-        return response.data;
-    }
-);
 const transactionSlice = createSlice({
     name: "transactions",
     initialState: {
         transactions: [],
+        analyticsData: [],
         loading: false,
         error: null,
         filters: {
@@ -73,7 +67,8 @@ const transactionSlice = createSlice({
             })
             .addCase(fetchTransactions.fulfilled, (state, action) => {
                 state.loading = false;
-                state.transactions = action.payload;
+                state.transactions = action.payload.txns || [];
+                state.analyticsData = action.payload.analyticsData || [];
             })
             .addCase(fetchTransactions.rejected, (state, action) => {
                 state.loading = false;

@@ -1,9 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import RadioGroup from "./Inputs/RadioGroup.js";
 import Input from "./Inputs/Input.js";
-import Form from "next/form";
 import {
   TextField,
   Select,
@@ -19,6 +18,9 @@ import axiosInstance from "../axiosInstance.js";
 import toast from "react-hot-toast";
 // import { log } from "console";
 import { capitalize } from "../../utils/helper.js";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchTransactions, resetFilters } from "../store/slices/transactionSlice.js";
+
 
 const TransactionForm = ({ initialData = {}, setIsModalOpen }) => {
   console.log("Txn Form -Initial Data:", initialData);
@@ -31,9 +33,13 @@ const TransactionForm = ({ initialData = {}, setIsModalOpen }) => {
   const [catOptions, setCatOptions] = useState(initialData?.catOptions || []);
   const isEditing = Boolean(initialData?._id);
   const router = useRouter();
+  const path = usePathname();
   // console.log("/TXN FOrm isEditing:", isEditing);
 
   const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const { filters } = useSelector(state => state.transactions);
+
   const fetchCategories = async () => {
     try {
       const response = await axiosInstance.get(`/api/categories/type/${type}`);
@@ -116,6 +122,15 @@ const TransactionForm = ({ initialData = {}, setIsModalOpen }) => {
     } finally {
       setIsModalOpen(false);
     }
+    if (path === '/transactions') {
+      dispatch(fetchTransactions(filters));
+    }
+    if (path === '/dashboard') {
+      resetFilters();
+      dispatch(fetchTransactions(filters));
+    }
+    // Clean the URL to remove any unwanted params
+    // router.replace(router.pathname);
   };
 
   const handleDelete = async (id) => {
@@ -129,11 +144,21 @@ const TransactionForm = ({ initialData = {}, setIsModalOpen }) => {
     } finally {
       setIsModalOpen(false);
     }
+    if (path === '/transactions') {
+      dispatch(fetchTransactions(filters));
+    }
+    else if (path === '/dashboard') {
+      resetFilters();
+      dispatch(fetchTransactions(filters));
+    }
+    
+    // Clean the URL to remove any unwanted params
+    // router.replace(router.pathname);
   };
 
   return (
     <div className="w-full mx-auto txn-form">
-      <Form>
+      <form>
         <RadioGroup
           value={type}
           onChange={(e) => {
@@ -231,7 +256,7 @@ const TransactionForm = ({ initialData = {}, setIsModalOpen }) => {
             {isEditing ? "Update" : "Save"}
           </button>
         </div>
-      </Form>
+      </form>
     </div>
   );
 };

@@ -1,29 +1,31 @@
 "use client";
 import React, { useContext, useEffect, useState } from "react";
 import { UserContext } from "../Context/UserContext";
-import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+// import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 
 // https://chat.mistral.ai/chat/13fa5c37-20a5-4390-aec4-209b91592369 style guide chat reply
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import {
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from "@mui/material";
-import dayjs from "dayjs";
+// import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+// import {
+//   TextField,
+//   Select,
+//   MenuItem,
+//   FormControl,
+//   InputLabel,
+// } from "@mui/material";
+// import dayjs from "dayjs";
 import axiosInstance from "../axiosInstance";
 import TransactionTable from "../components/TransactionTable";
 import Link from "next/link";
 import PieActiveArc from "../components/CategoriesChart";
 import BarChartIcon from "@mui/icons-material/BarChart";
-import { ArrowRight, ChartPie, Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
-import Modal from "../components/Modal";
-import TransactionForm from "../components/TransactionForm";
-import { set } from "mongoose";
+import { ArrowRight, Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+// import Modal from "../components/Modal";
+// import TransactionForm from "../components/TransactionForm";
+// import { set } from "mongoose";
 import TransactionModal from "../components/TransactionModal";
 import { CircularProgress } from "@mui/joy";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchTransactions } from "../store/slices/transactionSlice";
 
 const Page = () => {
   const { user, userloading, error } = useContext(UserContext);
@@ -65,6 +67,10 @@ const Page = () => {
   const [endDate, setEndDate] = useState(
     new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1)).toISOString()
   );
+  const dispatch = useDispatch();
+  const { transactions } = useSelector(state => state.transactions);
+  // dispatch(fetchTransactions({ startDate, endDate}));
+  console.log("redux store- transactions:", transactions)
 
   // Fetching recent (10) Transactions
   const fetchRecentTransactions = async () => {
@@ -183,7 +189,7 @@ const Page = () => {
             <p className="text-slate-500 text-center text-sm mt-3">
               Loading...
             </p>
-            </div>
+          </div>
         </div>
       ) : txnsLen > 0 ? (
         <>

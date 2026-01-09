@@ -75,7 +75,7 @@ const TransactionTable = ({ rows, theadStyles, txnsLen, loading }) => {
             rows?.length > 0 ? (
               rows.map((row) => (
                 <tr
-                  className="py-3 cursor-pointer hover:bg-gray-200 not-last:border-b-1 border-gray-300 border-b-"
+                  className="py-3 cursor-pointer hover:bg-gray-200 not-last:border-b border-gray-300 border-b-"
                   key={row._id}
                   onClick={() => {
                     setIsModalOpen(true);
